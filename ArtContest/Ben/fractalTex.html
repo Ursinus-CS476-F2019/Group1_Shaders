@@ -1,0 +1,376 @@
+<html>
+    <head>
+        <script src="shaders.js"></script>
+        <script src="gl-matrix-min.js"></script>
+        <meta charset="utf-8" />
+        <link rel="stylesheet" type="text/css" href="style.css">
+    </head>
+<body>
+
+<h1>Fractal Cats (Or Any Other 2D Texture): Put the inverse of the inputted texture inside a Julia set
+    fractal while leaving the outside unchanged.   
+</h1>
+
+
+<table>
+    <tr>
+        <td>
+            <canvas id="MainGLCanvas" style="border: none;" width="800" height="800"></canvas>
+        </td>
+        <td>
+            <table>
+                <tr>
+                    <td>
+                        <h2>Directions:</h2>
+
+                        <ul>
+                            <li>Left click and drag to move center</li>
+                            <li>Right click and drag to zoom in/out</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <table>
+                            <tr>
+                                <td><h3>C = </h3></td>
+                                <td><input type="text" id="CReal" size="3"></input></td>
+                                <td><h3>+</h3></td>
+                                <td><input type="text" id="CImag" size="3"></input></td>
+                                <td><h3>i</h3></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <table>
+                            <tr>
+                                <td><h3>Escape</h3></td>
+                                <td><input type="text" id="escape" size="3"></input></td>
+                            </tr>
+                        </table>
+
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <table>
+                        <tr>
+                            <td><h3>Pows</h3></td>
+                            <td><h1>(</h1></td><td><input type="text" id = "powx" size="3"></input></td><td><h1>,</h1></td>
+                            <td><input type="text" id = "powy" size="3"></input></td><td><h1>,</h1></td>
+                            <td><input type="text" id = "powz" size="3"></input></td>
+                            <td><h1>)</h1></td>
+                        </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <table>
+                        <tr>
+                            <td><h3>Center</h3></td>
+                            <td><h1>(</h1></td><td><input type="text" id = "cx" size="3"></input></td><td><h1>,</h1></td>
+                            <td><input type="text" id = "cy" size="3"></input></td></td>
+                            <td><h1>)</h1></td>
+                        </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <table>
+                            <tr>
+                                <td><h3>Scale</h3></td>
+                                <td><input type="text" id="scale" size="3"></input></td>
+                            </tr>
+                        </table>
+
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <button type = "button" onclick = "callUpdateParams()">Update Parameters</button>
+                    </td>
+                </tr>
+
+            </table>
+
+        </td>
+    </tr>
+</table>
+
+
+<script>
+    var glcanvas = document.getElementById("MainGLCanvas");
+    addEventListener("contextmenu", function(e){ e.stopPropagation(); e.preventDefault(); return false; }); //Need this to disable the menu that pops up on right clicking
+
+    try {
+        glcanvas.gl = glcanvas.getContext("webgl");
+        glcanvas.gl.viewportWidth = glcanvas.width;
+        glcanvas.gl.viewportHeight = glcanvas.height;
+    } catch (e) {
+        console.log(e);
+    }
+    let gl = glcanvas.gl;
+    let fracTexShader = getShaderProgram(gl, "fractalTex");
+    // keep regular fractal stuff
+    fracTexShader.uCenterUniform = gl.getUniformLocation(fracTexShader, "uCenter");
+    fracTexShader.uCUniform = gl.getUniformLocation(fracTexShader, "uC");
+    fracTexShader.uScaleUniform = gl.getUniformLocation(fracTexShader, "uScale");
+    fracTexShader.uEscapeUniform = gl.getUniformLocation(fracTexShader, "uEscape");
+    fracTexShader.uPowsUniform = gl.getUniformLocation(fracTexShader, "uPows");
+    positionLocation = gl.getAttribLocation(fracTexShader, "a_position");
+    gl.enableVertexAttribArray(positionLocation);
+    
+    // set up the texture to be 'fractalized'
+    let uSampler = gl.getUniformLocation(fracTexShader, 'uSampler');
+    let textureLocation = gl.getAttribLocation(fracTexShader, "a_texture");
+    gl.enableVertexAttribArray(textureLocation);
+
+    // Code copied from 
+    // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Using_textures_in_WebGL
+    function isPowerOf2(value) {
+        return (value & (value - 1)) == 0;
+    }
+
+    // Initialize a texture and load an image.
+    // When the image finished loading copy it into the texture.
+    //
+    function loadTexture(gl, url) {
+        const texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+
+        // Because images have to be download over the internet
+        // they might take a moment until they are ready.
+        // Until then put a single pixel in the texture so we can
+        // use it immediately. When the image has finished downloading
+        // we'll update the texture with the contents of the image.
+        const level = 0;
+        const internalFormat = gl.RGBA;
+        const width = 1;
+        const height = 1;
+        const border = 0;
+        const srcFormat = gl.RGBA;
+        const srcType = gl.UNSIGNED_BYTE;
+        const pixel = new Uint8Array([0, 0, 255, 255]);  // opaque blue
+        gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+                        width, height, border, srcFormat, srcType,
+                        pixel);
+
+        const image = new Image();
+        image.onload = function() {
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+                        srcFormat, srcType, image);
+
+            // WebGL1 has different requirements for power of 2 images
+            // vs non power of 2 images so check if the image is a
+            // power of 2 in both dimensions.
+            if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
+            // Yes, it's a power of 2. Generate mips.
+            gl.generateMipmap(gl.TEXTURE_2D);
+            } else {
+            // No, it's not a power of 2. Turn off mips and set
+            // wrapping to clamp to edge
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            }
+        };
+        image.src = url;
+
+        return texture;
+    }
+
+    // Setup some dummy positions for the vertex buffer
+    const positionBuffer = gl.createBuffer();
+    const positions = new Float32Array([-1.0,  1.0,
+                                        1.0,  1.0,
+                                        -1.0, -1.0,
+                                        1.0, -1.0]);
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+    // Setup some texture coordinates
+    const textureCoordBuffer = gl.createBuffer();
+    const textureCoords = new Float32Array([0, 0, 
+                                            1, 0,
+                                            0, 1,
+                                            1, 1]);
+    gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, textureCoords, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(textureLocation, 2, gl.FLOAT, false, 0, 0);
+
+    // Setup 2 triangles connecting the vertices so that there
+    // are solid shaded regions
+    const indexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    const tris = new Uint16Array([0, 1, 2, 1, 2, 3]);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, tris, gl.STATIC_DRAW);
+    indexBuffer.itemSize = 1;
+    indexBuffer.numItems = 6;
+
+    const texture = loadTexture(gl, 'cats.jpg');
+
+    // Setup uniforms that will change based on mouse interaction
+    // and inputs
+    let CReal = -1.0;
+    let CImag = 0;
+    let scale = 1;
+    let escape = 2.0;
+    let center = glMatrix.vec2.fromValues(0, 0);
+    let pows = glMatrix.vec3.fromValues(500, 1000, 100);
+
+    function repaint() {
+        glcanvas.gl.useProgram(fracTexShader);
+        // Step 1: Setup uniform variables that are sent to the shaders
+        gl.uniform2fv(fracTexShader.uCenterUniform, center);
+        gl.uniform2fv(fracTexShader.uCUniform, glMatrix.vec2.fromValues(CReal, CImag));
+        gl.uniform1f(fracTexShader.uScaleUniform, scale);
+        gl.uniform1f(fracTexShader.uEscapeUniform, escape);
+        gl.uniform3fv(fracTexShader.uPowsUniform, pows);
+
+        // Set active texture
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.uniform1i(uSampler, 0);
+
+        // Step 2: Bind vertex and index buffers to draw two triangles
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+        gl.drawElements(gl.TRIANGLES, indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+    }
+    repaint();
+    
+
+    // Set values 
+    document.getElementById("escape").value = escape;
+    document.getElementById("powx").value = pows[0];
+    document.getElementById("powy").value = pows[1];
+    document.getElementById("powz").value = pows[2];
+    document.getElementById("CReal").value = CReal;
+    document.getElementById("CImag").value = CImag;
+    let cxInput = document.getElementById("cx");
+    let cyInput = document.getElementById("cy");
+    cxInput.value = center[0];
+    cyInput.value = center[1]
+    let scaleInput = document.getElementById("scale");
+    scaleInput.value = scale;
+
+    // Function for updating parameters from inputs
+    function callUpdateParams() {
+        let powx = parseFloat(document.getElementById("powx").value);
+        let powy = parseFloat(document.getElementById("powy").value);
+        let powz = parseFloat(document.getElementById("powz").value);
+        pows = glMatrix.vec3.fromValues(powx, powy, powz);
+        escape = parseFloat(document.getElementById("escape").value);
+        CReal = parseFloat(document.getElementById("CReal").value);
+        CImag = parseFloat(document.getElementById("CImag").value);
+        center[0] = parseFloat(cxInput.value);
+        center[1] = parseFloat(cyInput.value);
+        scale = parseFloat(scaleInput.value);
+
+        repaint();
+    }
+
+
+
+
+
+    // Functions for mouse interaction
+    let dragging = false;
+    let justClicked = false;
+    let clickType = "LEFT";
+    let lastX = 0;
+    let lastY = 0;
+
+    getMousePos = function(evt) {
+        if ('touches' in evt) {
+            return {
+                X: evt.touches[0].clientX,
+                Y: evt.touches[1].clientY
+            }
+        }
+        return {
+            X: evt.clientX,
+            Y: evt.clientY
+        };
+    }
+    
+    releaseClick = function(evt) {
+        evt.preventDefault();
+        dragging = false;
+        repaint();
+        return false;
+    } 
+    mouseOut = function(evt) {
+        dragging = false;
+        repaint();
+        return false;
+    }
+    makeClick = function(e) {
+        let evt = (e == null ? event:e);
+        clickType = "LEFT";
+        evt.preventDefault();
+        if (evt.which) {
+            if (evt.which == 3) clickType = "RIGHT";
+            if (evt.which == 2) clickType = "MIDDLE";
+        }
+        else if (evt.button) {
+            if (evt.button == 2) clickType = "RIGHT";
+            if (evt.button == 4) clickType = "MIDDLE";
+        }
+        dragging = true;
+        justClicked = true;
+        let mousePos = getMousePos(evt);
+        lastX = mousePos.X;
+        lastY = mousePos.Y;
+        repaint();
+        return false;
+    } 
+
+    //http://www.w3schools.com/jsref/dom_obj_event.asp
+    clickerDragged = function(evt) {
+        evt.preventDefault();
+        let mousePos = getMousePos(evt);
+        let X = mousePos.X;
+        let Y = mousePos.Y;
+        let dX = X - lastX;
+        let dY = Y - lastY;
+        lastX = X;
+        lastY = Y;
+        if (dragging) {
+            if (clickType == "RIGHT") { //Right click
+                scale *= Math.pow(1.01, dY); //Want to zoom in as the mouse goes up
+            }
+            else if (clickType == "LEFT") {
+                center[0] += 2.0*dX/glcanvas.width*scale;
+                center[1] -= 2.0*dY/glcanvas.height*scale;
+            }
+            cxInput.value = center[0];
+            cyInput.value = center[1]
+            scaleInput.value = scale;
+            repaint();
+        }
+        return false;
+    }
+
+    glcanvas.addEventListener('mousedown', makeClick);
+    glcanvas.addEventListener('mouseup', releaseClick);
+    glcanvas.addEventListener('mousemove', clickerDragged);
+    glcanvas.addEventListener('mouseout', mouseOut);
+
+    //Support for mobile devices
+    glcanvas.addEventListener('touchstart', makeClick);
+    glcanvas.addEventListener('touchend', releaseClick);
+    glcanvas.addEventListener('touchmove', clickerDragged);
+
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,401 @@
+<!DOCTYPE HTML>
+<!--
+	Editorial by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+<!-- Header !-->
+	<head>
+		<title>Ursinus CS 476: Computer Graphics</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<!--[if lte IE 8]><script src="../../assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="../../assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="../../assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="../../assets/css/ie8.css" /><![endif]-->
+        <style>
+        .image_off, #home:hover .image_on{
+           display:none
+        }
+        .image_on, #home:hover .image_off{
+           display:block
+        }
+        </style>
+	</head>
+	<body>
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Main -->
+					<div id="main">
+						<div class="inner">
+
+							<!-- Header -->
+								<header id="header">
+									<a href="../../index.html" class="logo"><strong>Ursinus CS 476: Computer Graphics</strong></a>
+								</header>
+<!-- End Header !-->
+
+							<!-- Content -->
+								<section>
+									<header class="main">
+                                        <h2>Mini Assignment 3: Shaders (30 Points)</h2>
+                                        <h3>Due Wednesday 10/2/2019 at 11:59PM</h3>
+									</header>
+
+									<div id="page-content">
+										<h3>
+											<ul>
+												<li><a href = "#overview">Overview</a></li>
+                                                <li><a href = "#submission">Submission Instructions</a></li>
+                                                <li><a href = "#tasks">Tasks</a>
+                                                    <ul>
+                                                        <li><a href = "#risenshine">Task 1: Rise N' Shine (10 pts)</a></li>
+                                                        <li><a href = "#julia">Task 2: Julia Sets (15 pts)</a></li>
+                                                        <li><a href = "#artcontest">Task 3: Art Contest (5 pts)</a></li>
+                                                    </ul>
+                                                </li>
+											</ul>
+										</h3>
+										
+										<h2><a name = "overview">Overview</a></h2>
+										<p>
+										The purpose of this assignment is to familiarize students with the the GLSL programming paradigms, particularly vertex and fragment shaders.  This will be the final warmup assignment before the first large scale asssignment on ray tracing.
+										</p>
+										
+										<h3>Getting Started</h3>
+										<p>
+										
+                                        </p>
+                                        
+                                        <ol>
+                                            <li>
+                                                <a href = "https://github.com/Ursinus-CS476-F2019/Mini3_Shaders/">Click here</a> to download the repository of skeleton code for this assignment.
+                                            </li>
+                                            <li>
+                                                If you haven't already, follow the directions to get the local Python web server working on your computer (<a href = "../Mini2_SceneGraphs/index.html#pythonserver">click here</a> to see these directions in the last assignment). 
+                                                </p>
+                                            </li>
+                                        </ol>
+										
+										
+										<h2><a name = "submission">Submission Instructions</a></h2>
+										
+										You will submit all of your fragment shaders to Canvas when you are finished.  Please also submit a <b><code>README.txt</code></b> file with both submissions with the following information each time:
+										<ol>
+                                        <li>Your name<BR><BR></li>
+                                        <li>One of the two statements below
+                                            <ol>
+                                                <li>
+                                                    "I consent to have my art contest submission posted publicly on the class web site.  My name/pseudonym for public display is <u>&nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp.</u>
+                                                </li>
+                                                <li>
+                                                    "I do not wish to post my art contest submission publicly"
+                                                </li>
+                                            </ol>
+
+                                        </li>
+										<li>Approximately how many hours it took you to finish this assignment (<i>I will not judge you for this at all...I am simply using it to gauge if the assignments are too easy or hard</i>)<BR><BR></li>
+										<li>Your overall impression of the assignment.  Did you love it, hate it, or were you neutral?  One word answers are fine, but if you have any suggestions for the future let me know.<BR><BR></li>
+										
+										<li>Any other concerns that you have.</li>
+										</ol>
+                                        
+                                        
+										<HR>
+
+                                            <h3>General Tips:</h3>
+                                            <ul>
+                                                <li><b>Write your shaders one step at a time!</b>  Debugging is very difficult because the only output is a color per pixel.  Try to use the colors to help you debug.</li>
+                                                <li>
+                                                    If your shader doesn't compile, drop into the debugging console to see why.  Syntax error messages will be printed there with line numbers in the shader.
+                                                </li>
+                                                <li>
+                                                    If your shader doesn't update, you may need to do a "hard refresh" and reset your cache.  This seems to happen particularly in Google Chrome.  The keyboard shortcut for this is <code>CTRL+SHIFT+R</code>
+                                                </li>
+                                                <li>
+                                                    If you get an error like the following
+                                                    <p>
+                                                        <code>
+                                                        ERROR: 0:15: '+' : wrong operand types - no operation '+' exists that takes a left-hand operand of type 'const int' and a right operand of type 'mediump float' (or there is no acceptable conversion)
+                                                        </code>
+                                                    </p>
+                                                    Then it probably means you need to write a number as a decimal.  There is no explicit casting, so when GLSL sees <code>10</code>, for instance, it assumes it's an integer.  So you would need to write <code>10.0</code>
+                                                </li>
+
+                                            </ul>
+                                            
+
+                                            
+
+										<HR>
+
+                                        <h2><a name = "risenshine">Task 1: Rise N' Shine (10 Points)</a></h2>
+                                        
+                                        <p>
+                                            Create an animation of a sun that starts on the left hand side of the screen and moves in a semicircular arc across the screen to the right hand side.  When it's at the left or right side, the background should be dark.  When it reaches its peak at the center of the screen, it should be lighter.  When it reaches its minimum at the right hand side of the screen, it should restart on the left.  More specifically:
+                                            <ul>
+                                                <li>The uniform variable <code>uTime</code> holds the elapsed time since the beginning of the simulation.  You should make a circle with sines and cosines of this variable.</li>
+                                                <li>The green channel of the output pixel should be <h2> \[ e^{-dR^2/r^2} \] </h2> where <code>dR</code> is the distance of the pixel to the center of the disc, and <code>r</code> is the radius of the disc.</li>
+
+                                                <li>The red channel should be a sine wave that starts at zero and reaches its peak at 1, and then ends at zero before it's reset.</li>
+                                            </ul>
+                                        </p>
+                                        
+                                        
+                                        
+                                        <u>Code to write:</u> You only need to edit <b><code>circle.frag</code></b> for this task.  You do not need to touch the vertex shader or HTML file<BR><BR>
+                                        
+                                        <u>Gui Tester:</u> <b><code>circle.html</code></b><BR><BR>
+
+                                        <div id = "tips">
+                                            <b>Tips:</b>
+                                            <ul>
+                                            <li>The function for raising <code>e</code> to a power in GLSL is <code>exp</code></li>
+
+                                            <li>
+
+                                                    Be careful when defining vector in GLSL.  This is a valid line of code
+
+                                                    <BR>
+                                                        <code>
+                                                            vec2 x = vec2(1.0, 3.0);
+                                                        </code>
+                                                    <BR>
+
+                                                    This is not a valid line of code
+                                                    
+                                                    <BR>
+                                                        <code>
+                                                            vec2 x = (1.0, 3.0);
+                                                        </code>
+                                                    <BR>
+
+                                                    You will get some confusing error messages at compile time if you do the latter.
+
+
+                                            </li>
+
+                                            <li>Since you're only going through a semicircle and it resets each time, you will need to set a variable that's equal to the remainder of the uniform time divided by PI.  Since the modulus % operator doesn't exist, you should use the <code>floor()</code> function instead.</li>
+                                            </ul>
+                                        </div>
+
+                                        <h3>Screenshots of A Working Implementation</h3>
+
+                                        <table>
+                                            <tr>
+                                                <td><img src = "Shine1.png"></td>
+                                                <td><img src = "Shine2.png"></td>
+                                                <td><img src = "Shine3.png"></td>
+                                            </tr>
+                                        </table>
+
+
+
+
+
+
+
+                                        <h2><a name = "julia">Task 2: Julia Sets (15 Points)</a></h2>
+                                        
+                                        <p>
+                                            A <a href = "https://en.wikipedia.org/wiki/Fractal">fractal</a> is an object which is "self-similar," possibly across an infinite amount of rescaling.  Roughly, what this means is if we zoom in on the shape, we will see the shape repeated.  Or in other words, the shape is made up of itself.
+                                        </p>
+                                            One kind of fractal emerges when we consider the behavior of the following recursive equation
+
+                                            <h3>
+                                                \[ z_{n+1} = z_n^2 + c \]
+                                            </h3>
+
+                                            where <b>z<SUB>n</SUB></b>, <b>z<SUB>n+1</SUB></b>, and <b>c</b> are all complex numbers, <b>z<SUB>n</SUB><SUP></SUP></b> is <a href = "https://en.wikipedia.org/wiki/Complex_number#Multiplication">complex multiplication</a> of <b>z<SUB>n</SUB></b> with itself, <b>c</b> is some constant complex number specified in advance, and <b>z<SUB>0</SUB></b> is some initial condition specified in advanced.  For a fixed <b>c</b>, we can try different initial conditions and see how long it takes them to "escape," or move beyond a certain radius, or "complex modulus" from the origin.
+                                        </p>
+
+                                        <p>
+                                        Your task will be to implement a real time viewer for Julia sets where you can move around and zoom in and out.  You will implement a fragment shader in which every pixel is a different initial condition.  You will then need to deal with the following uniforms:
+                                        <ul>
+                                            <li><code>vec2 uCenter:</code> The center of the viewing window on the complex plane (uCenter.x + i * uCenter.y)</li>
+
+                                            <li>
+                                                <code>vec2 uC</code>: The constant complex number that's added at each iteration.
+                                            </li>
+
+                                            <li>
+                                                <code>float uScale</code>: The scale of the viewing window
+                                            </li>
+
+                                            <li>
+                                                <code>uEscape:</code> The escape radius of the equation.  We consider a point escaped when \[ \text{real}^2 + \text{imag}^2 > \text{uEscape}^2 \]
+                                            </li>
+
+                                            <li>
+                                                <code>MAX_ITERS</code>: This is not a uniform per se, but a constant defined at the top of the shader which defines how many iterations you should check before giving up and capping the escape number as MAX_ITERS.
+                                            </li>
+
+                                            <li><code>vec3 uPows</code>: A variable that tells us how to convert the escape number into a red, green, or blue channel.  Let <b>N</b> be the number of iterations it takes a point to escape, let <b>I</b> be <code>MAX_ITERS</code>, and let <b>uPows = (a, b, c)</b>.  Then the RGB values should be
+                                            
+                                            \[ R = a^{-N/I}, G = b^{-N/I}, B = c^{-N/I} \]
+                                            </li>
+                                        </ul>
+                                        </p>
+
+                                        <p>
+                                            Note that the equation for the complex number that a fragment location <code>u_position</code> represents should be <BR><code>uScale*v_position - uCenter</code>
+                                        </p>
+                                        
+                                        <p>
+                                        <u>Code to write:</u> You only need to edit <b><code>fractal.frag</code></b> for this task.  You do not need to touch the vertex shader or HTML file<BR><BR>
+                                        
+                                        <u>Gui Tester:</u> <b><code>fractal.html</code></b><BR><BR>
+
+                                        <div id = "tips">
+                                            <b>Tips:</b>
+                                            <ul>
+                                                <li>Complex numbers can be implemented as a <code>vec2</code> type, where the x component is the real part and the y component is the imaginary part.  Complex addition is then the same as vector addition, but there is a different rule for complex multiplication.  In particular, if \[a = x_a + iy_a \] and \[ b = x_b + iy_b \] then 
+                                                    \[ ab = (x_ax_b - y_ay_b) + i(x_ay_b + x_by_a) \] </li>
+
+                                                <li>Types are a real killer on this one.  For instance, you will be making a for loop to count how many iterations it takes before a point escapes, and you will eventually write a function of this number to a color channel. Because the color channels are expecting floats, though, and because there is no explicit casting, you will need your loop iterator to be a float.</li>
+                                            </ul>
+                                        </div>
+                                        </p>
+
+                                        <h3>Screenshots of A Working Implementation</h3>
+                                        <img src = "Julia1.png"><BR><BR>
+                                            <img src = "Julia2.png">
+
+                                    <h2><a name = "artcontest">Task 3: Art Contest (5 Points)</a></h2>        
+
+                                        <p>
+                                            Do something creative with shaders!  There are enough examples in this directory that you can draw from.  The winner will receive 5 extra credit points.
+                                        </p>
+
+                                    </div>
+						</div>
+					</div>
+
+					<!--LaTeX in Javascript!-->
+					<script src="../../../../jsMath/easy/load.js"></script>
+					<!--Syntax highlighting in Javascript!-->
+					<script type="text/javascript" src="../../../../syntaxhighlighter/scripts/shCore.js"></script>
+					<script type="text/javascript" src="../../../syntaxhighlighter/scripts/shBrushJScript.js"></script>
+					<script type="text/javascript" src="../../../../syntaxhighlighter/scripts/shBrushCpp.js"></script>
+					<script type="text/javascript" src="../../../../syntaxhighlighter/scripts/shBrushMatlabSimple.js"></script>
+					<script type="text/javascript" src="../../../../syntaxhighlighter/scripts/shBrushPython.js"></script>
+					<link type="text/css" rel="stylesheet" href="../../../../syntaxhighlighter/styles/shCoreDefault.css"/>
+					<script type="text/javascript">SyntaxHighlighter.all();</script>
+
+<!-- Sidebar -->
+					<div id="sidebar">
+						<div class="inner">
+							<!-- Menu -->
+								<nav id="menu">
+									<header class="major">
+										<h2>Menu</h2>
+									</header>
+									<ul>
+										<li><a href="../../index.html">General</a></li>
+										<li><a href = "../../Schedule/index.html">Schedule</a></li>
+										<li>
+											<span class="opener">Assignments</span>
+											<ul>
+												<li><a href = "../../Assignments/index.html">Main Assignments Page</a></li>
+												<li>
+													<ul>
+                                                        <li><a href = "../../Assignments/Mini1_GeometricPrimitives/index.html">Mini 1: Geometric Primitives</a></li>
+                                                        <li><a href = "../../Assignments/Mini2_SceneGraphs/index.html">Mini 2: Scene Graphs</a></li>
+                                                        <li><a href = "../../Assignments/Mini3_Shaders/index.html">Mini 3: Shaders/GLSL</a></li>
+                                                        <li><a href = "../../Assignments/LargeScale1_RayTracer/index.html">Large 1: Ray Tracing</a></li>
+                                                        <li><a href = "../../Assignments/LargeScale2_3DShapeModeling/index.html">Large 2: Polygon Mesh Processing</a></li>
+                                                        <li>
+                                                        <a href = "../../Assignments/Mini4_EulerAngles/index.html">Mini 4: Euler Angles</a>
+                                                        </li>
+                                                    </ul>
+												</li>
+											</ul>
+										</li>
+										<li><a href = "../../FinalProject/index.html">Final Project</a></li>
+										<li><a href = "../../Raffle/index.html">Raffle</a></li>
+									</ul>
+								</nav>
+
+							<!-- Section -->
+								<section>
+									<div class="mini-posts">
+										Announcements	
+										<ul>
+                                            <li>
+                                                <b>2019/12/14: </b>The <a href = "../../Assignments/LargeScale2_3DShapeModeling/ArtContest/index.html">art contest</a> submissions for the mesh processing assignment are up!
+                                            </li>
+                                            <li>
+                                                <b>2019/11/20:</b> <a href = "../../Assignments/Mini4_EulerAngles/index.html">Mini 4: Euler Angles</a> is up!
+                                            </li>
+                                            <li>
+                                                <b>2019/11/19:</b> The <a href = "../../Assignments/LargeScale1_RayTracer/ArtContest/index.html">art contest</a> submissions for the ray tracer are up!
+                                            </li>
+                                            <li>
+                                                <b>2019/11/17:</b> The <a href = "../../Lectures/CelShading/ArtContest/index.html">art contest</a> submissions the midterm on shading are up!
+                                            </li>
+                                            <li>
+                                                <b>2019/11/17:</b> The <a href = "../../Assignments/Mini3_Shaders/ArtContest/index.html">art contest</a> submissions for mini assignment 3 are up!
+                                            </li>
+                                            <li>
+                                                <b>2019/10/30: </b><a href = "../../Assignments/LargeScale2_3DShapeModeling/index.html">Large 2: Polygon Mesh Processing</a> is up!
+                                            </li>
+                                            <li>
+                                                <b>2019/10/14:</b> The <a href = "../../Assignments/Mini2_SceneGraphs/ArtContest/index.html">art contest</a> submissions for mini assignment 2 are up!
+                                            </li>
+                                            <li>
+                                                <b>2019/10/07</b>: <a href = "../../Assignments/LargeScale1_RayTracer/index.html">Large 1: Ray Tracing</a> is up!
+                                            </li>
+                                            <li>
+                                                <b>2019/09/25</b>: <a href = "../../Assignments/Mini3_Shaders/index.html">Mini 3: Shaders/GLSL</a> is up!
+                                            </li>
+                                            <li>
+                                                <b>2019/09/17</b>: <a href = "../../Assignments/Mini2_SceneGraphs/index.html">Mini 2: Scene Graphs</a> is up!
+                                            </li>
+											<li>
+												<b>2019/08/28</b>: <a href = "../../Assignments/Mini1_GeometricPrimitives/index.html">Mini 1: Geometric Primitives</a> is up!
+											</li>
+                                            <li>
+                                                Special shoutout to Aliaks Hlakdou for an <a href = "../../FinalProject/Aliaks/particles3d.html">amazing final project</a>
+                                            </li>
+										</ul>									
+                                    </div>
+								</section>
+
+
+							<!-- Footer -->
+								<footer id="footer">
+									<p class="copyright">&copy; <a href = "http://www.ctralie.com">Christopher J. Tralie</a>. All rights reserved.  Contact chris.tralie@gmail.com. Design: <a href="https://html5up.net">HTML5 UP</a>.</p>
+								</footer>
+
+						</div>
+					</div>
+
+			</div>
+			
+            <!-- Start of StatCounter Code -->
+            <script type="text/javascript">
+            var sc_project=7309088; 
+            var sc_invisible=1; 
+            var sc_security="f655b56d"; 
+            </script>
+            <script type="text/javascript"
+            src="http://www.statcounter.com/counter/counter.js"></script>
+            <noscript><div class="statcounter"><a title="free hit counter"
+            href="http://statcounter.com/" target="_blank"><img class="statcounter"
+            src="http://c.statcounter.com/7309088/0/f655b56d/1/" alt="free hit
+            counter"></a></div></noscript>
+            <!-- End of StatCounter Code -->
+<!-- End Sidebar !-->
+
+<!-- Scripts -->
+			<script src="../../assets/js/jquery.min.js"></script>
+			<script src="../../assets/js/skel.min.js"></script>
+			<script src="../../assets/js/util.js"></script>
+			<!--[if lte IE 8]><script src="../../assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="../../assets/js/main.js"></script>
+<!-- End Scripts -->
+	</body>
+</html>
